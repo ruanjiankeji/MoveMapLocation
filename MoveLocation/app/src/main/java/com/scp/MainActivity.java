@@ -93,6 +93,7 @@ public class MainActivity extends AppCompatActivity implements BDLocationListene
         mMapView = (MapView) findViewById(R.id.main_bdmap);
         mBaiduMap = mMapView.getMap();
 
+        mMapView.showZoomControls(false);
         poisLL = (ListView) findViewById(R.id.main_pois);
 
         topRL = (RelativeLayout) findViewById(R.id.main_top_RL);
@@ -161,7 +162,8 @@ public class MainActivity extends AppCompatActivity implements BDLocationListene
 
         //设置 LocationClientOption
         mLocClient.setLocOption(option);
-
+        //创建GeoCoder实例对象
+        geoCoder = GeoCoder.newInstance();
         //开始定位
         mLocClient.start();
 
@@ -184,13 +186,13 @@ public class MainActivity extends AppCompatActivity implements BDLocationListene
         MyLocationData data = new MyLocationData.Builder()
                 //定位精度bdLocation.getRadius()
                 .accuracy(bdLocation.getRadius())
-                        //此处设置开发者获取到的方向信息，顺时针0-360
+                //此处设置开发者获取到的方向信息，顺时针0-360
                 .direction(bdLocation.getDirection())
-                        //经度
+                //经度
                 .latitude(bdLocation.getLatitude())
-                        //纬度
+                //纬度
                 .longitude(bdLocation.getLongitude())
-                        //构建
+                //构建
                 .build();
 
         //设置定位数据
@@ -212,16 +214,18 @@ public class MainActivity extends AppCompatActivity implements BDLocationListene
         //文本输入框改变监听，必须在定位完成之后
         searchAddress.addTextChangedListener(this);
 
-        //创建GeoCoder实例对象
-        geoCoder = GeoCoder.newInstance();
+
         //发起反地理编码请求(经纬度->地址信息)
         ReverseGeoCodeOption reverseGeoCodeOption = new ReverseGeoCodeOption();
         //设置反地理编码位置坐标
         reverseGeoCodeOption.location(new LatLng(bdLocation.getLatitude(), bdLocation.getLongitude()));
-        geoCoder.reverseGeoCode(reverseGeoCodeOption);
+        if (geoCoder != null) {
+            geoCoder.reverseGeoCode(reverseGeoCodeOption);
 
-        //设置查询结果监听者
-        geoCoder.setOnGetGeoCodeResultListener(this);
+            //设置查询结果监听者
+            geoCoder.setOnGetGeoCodeResultListener(this);
+        }
+
     }
 
     //地理编码查询结果回调函数
@@ -233,8 +237,11 @@ public class MainActivity extends AppCompatActivity implements BDLocationListene
     @Override
     public void onGetReverseGeoCodeResult(ReverseGeoCodeResult reverseGeoCodeResult) {
         List<PoiInfo> poiInfos = reverseGeoCodeResult.getPoiList();
-        PoiAdapter poiAdapter = new PoiAdapter(MainActivity.this, poiInfos);
-        poisLL.setAdapter(poiAdapter);
+        if (poiInfos != null && poiInfos.size() > 0) {
+            PoiAdapter poiAdapter = new PoiAdapter(MainActivity.this, poiInfos);
+            poisLL.setAdapter(poiAdapter);
+        }
+
     }
 
 
